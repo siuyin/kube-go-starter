@@ -1,0 +1,5 @@
+*.swp
+**/*secret*
+**/cmd/hello/hello
+**/cmd/**/Dockerfile
+

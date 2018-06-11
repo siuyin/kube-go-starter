@@ -1,0 +1,3 @@
+FROM scratch
+ADD _BIN_ /
+CMD ["/_BIN_"]
