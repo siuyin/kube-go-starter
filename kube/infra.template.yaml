@@ -1,0 +1,143 @@
+# Cluster Infrastructure components. Eg. Databases.
+
+# NATS service
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats-{{.cfg.stage}}
+  labels:
+    component: nats-{{.cfg.stage}}
+    sys: infra-{{.cfg.stage}}
+spec:
+  selector:
+    component: nats-{{.cfg.stage}}
+  #clusterIP: None
+  type: NodePort # make nats accessible from outside the cluster.
+  ports:
+  - name: client
+    port: 4222
+  - name: cluster
+    port: 6222
+  - name: monitor
+    port: 8222
+
+---
+# NATS deployment
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nats-config-{{.cfg.stage}}
+  labels:
+    sys: infra-{{.cfg.stage}}
+    component: nats-config-{{.cfg.stage}}
+data:
+  nats-config: |
+    max_payload: 10000000
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: nats-{{.cfg.stage}}
+  labels:
+    component: nats-{{.cfg.stage}}
+    sys: infra-{{.cfg.stage}}
+spec:
+  replicas: 1 # tells deployment to run 1 pods matching the template
+  template:
+    metadata:
+      labels:
+        component: nats-{{.cfg.stage}}
+        sys: infra-{{.cfg.stage}}
+    spec:
+      containers:
+      - name: nats-{{.cfg.stage}}
+        image: quay.io/pires/docker-nats:0.9.6_1
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/nats-siuyin
+        #imagePullPolicy: Always
+        env:
+        - name: EXTRA
+          value: "-c /etc/nats-siuyin/nats-config"
+        ports:
+        - containerPort: 4222
+          name: client
+        - containerPort: 6222
+          name: cluster
+        - containerPort: 8222
+          name: monitor
+        livenessProbe:
+          exec:
+            command:
+            - /route_checker
+          initialDelaySeconds: 300
+          timeoutSeconds: 30
+          periodSeconds: 15
+        # readinessProbe:
+        #   tcpSocket:
+        #     port: 8222
+        #   initialDelaySeconds: 300
+        #   timeoutSeconds: 30
+        #   periodSeconds: 15
+      volumes:
+      - name: config-volume
+        configMap:
+          name: nats-config-{{.cfg.stage}}
+---
+# postgres DB service
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: postgres-{{.cfg.stage}}
+    sys: infra-{{.cfg.stage}}
+  name: postgres-{{.cfg.stage}}
+spec:
+  type: NodePort
+  ports:
+    - port: 5432
+      name: psql
+  selector:
+    app: postgres-{{.cfg.stage}}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pgclaim-{{.cfg.stage}}
+  labels:
+    sys: infra-{{.cfg.stage}}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: "{{.cfg.postgresUUID}}"
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: postgres-{{.cfg.stage}}
+  labels:
+    sys: infra-{{.cfg.stage}}
+spec:
+  replicas: 1 # tells deployment to run 1 pods matching the template
+  template: # create pods using pod definition in this template
+    metadata:
+      labels:
+        app: postgres-{{.cfg.stage}}
+        sys: infra-{{.cfg.stage}}
+    spec:
+      containers:
+      - name: postgres-{{.cfg.stage}}
+        image: postgres:9.6-alpine
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: pgdata
+      volumes:
+      - name: pgdata
+        persistentVolumeClaim:
+          claimName: pgclaim-{{.cfg.stage}}
+      nodeSelector:
+        kubernetes.io/hostname: "{{.cfg.hostPathNodeSelector}}"
+

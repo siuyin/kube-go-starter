@@ -1,0 +1,13 @@
+---
+cfg:
+  stage: "local"
+  hostPathNodeSelector: "minikube"
+  #NFSServer: "10.0.2.15"  # host serving nfs shares
+  # NOTE: paths need to be manually created on the host prior to running
+  # kubectl apply -f vols.{stage}.yaml
+
+  #drcSubmissionStatusName: "drc-submission-status"
+  #drcSubmissionStatusUUID: "eb716a6e-a150-4d58-886e-a18e34bdb5c6"
+  #drcSubmissionStatusVer: "v2"
+
+  postgresUUID: "953a729a-e08f-4289-87d8-09a284867df1"

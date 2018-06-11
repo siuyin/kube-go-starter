@@ -1,5 +1,10 @@
 *.swp
 **/*secret*
+**/*.local.yaml
+**/*.test.yaml
+**/*.prod.yaml
 **/cmd/hello/hello
 **/cmd/**/Dockerfile
+**/cfg-apply/cfg-apply
+**/cfg-apply/cfg-apply
 

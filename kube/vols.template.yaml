@@ -1,0 +1,17 @@
+# System volumes.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-{{.cfg.stage}}
+  labels:
+    sys: infra-{{.cfg.stage}}
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: "{{.cfg.postgresUUID}}"
+  hostPath:
+    path: /data/postgres-{{.cfg.stage}}
+    #server: "{{.cfg.NFSServer}}"
