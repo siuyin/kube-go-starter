@@ -5,3 +5,6 @@
     mv kube-go-starter your-project
 1. cd your-project
 1. git init ....
+
+## kubernetes install scripts
+1. see kube folder
